@@ -119,17 +119,21 @@ paths:
     post:
       summary: Отправляет уведомление
       description: Отправляет уведомление в т. ч. с кнопками согласования из писем
-      parameters:
-        - name: notificationType
-          required: true
-          in: query
-          schema:
-            type: string
-          example: emailApproval
-        - in: query
-          name: UserRequest
-          schema:
-            $ref: '#/components/schemas/UserRequest'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - notificationType
+                - UserRequest
+              properties:
+                notificationType:
+                  type: string
+                  example: emailApproval
+                UserRequest:
+                  $ref: '#/components/schemas/UserRequest'
       responses:
         "200":
           description: OK
@@ -188,7 +192,7 @@ components:
                 type: string
                 description: Значение пользовательского поля
                 example: "Баянист"
-        action РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        action:
           type: string
           description: Действие пользователя.
           example: "Отправить"
@@ -212,7 +216,7 @@ components:
                 type: string
                 description: Значение пользовательского поля
                 example: "Баянист"
-        action РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        action:
           type: string
           description: Действие пользователя.
           example: "Отправить"
@@ -255,7 +259,7 @@ components:
           description: Человекочитаемый номер документа. Должен быть уникален как минимум в пределах BusinessType. Можно использовать documentID
           example: 40
 
-        availableActions РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        availableActions:
           type: array
           description: |
             Доступные действия. Если actionUserLogin не указан — массив будет пустым.
@@ -290,7 +294,7 @@ components:
           description: Название заявки во внешней системе
           example: "Заявка на вакансию: Дополнительный офис \"ТАТАРСТАН\"/Руководитель Направления №123"
 
-        finalStage РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        finalStage:
           type: boolean
           description: Признак финальной стадии - процесс завершен
           example: true
@@ -319,7 +323,7 @@ components:
           description: Дата-время Дата завершения заявки, не обязательно успешного. Например,  заявка может быть отменена.
           example: "2024-02-24T14:30:00Z"
 
-        currentApproversLogins РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        currentApproversLogins:
           type: array
           description: Логины назначенных исполнителей на задачи согласования
           items:
@@ -331,7 +335,7 @@ components:
           description: URL-адрес пользовательского интерфейса заявки
           example: https://bitrix.frhc.group/...
 
-        currentApprovalTasksUIurl РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        currentApprovalTasksUIurl:
           type: array
           description: URL-адрес пользовательского интерфейса текущих задач согласования
           items:
@@ -487,7 +491,7 @@ components:
           items:
             type: string
           example: ["Создан", "В работе", "Утверждение"]
-        finalStage РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+        finalStage:
           type: boolean
           description: Признак завершения - финальная стадия
           example: false
@@ -630,7 +634,7 @@ components:
               example: "shikhmagomedov"
       description: Служебные поля. Массив объектов с парой ключ-значение. Используются для управления бизнес-процессом.
         
-    action РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+    action:
       name: action
       in: query
       required: false
