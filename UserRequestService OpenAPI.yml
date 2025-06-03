@@ -1,0 +1,640 @@
+openapi: "3.0.1"
+info:
+  title: UserRequestService
+  version: "1.0"
+  description: Данный API предназначен для обработки заявок пользователей
+servers:
+  - url: https://portal-test.cifra.works/api/UserRequestService
+    description: Test server
+  - url: https://portal-dev.cifra.works/api/UserRequestService
+    description: Dev server
+
+paths:
+  /UserRequest/{systemId}:
+    get:
+      summary: Получение данных по заявке пользователя
+      description: Возвращает все данные по заявке пользователя, доступные действия (если указан actionUserLogin)
+      parameters:
+      - name: systemId
+        description: systemId заявки (GUID)
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      - name: actionUserLogin
+        required: false
+        in: query
+        schema:
+          type: string
+   
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequest'
+        "404":
+          description: Not Found
+    delete:
+      summary: Удаление заявки пользователя
+      description: Удаляет заявку пользователя
+      parameters:
+      - name: systemId
+        description: systemId заявки
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+    put:
+      summary: Обновление заявки
+      description: Обновляет заявку пользователя. Возможность изменения конкретных полей определяется бизнес-логикой
+      parameters:
+        - $ref: "#/components/parameters/systemId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutRequestSchema"
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequestOnlySystemId'
+  /UserRequest:
+    post:
+      summary: Создание заявки
+      description: Создает заявку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostRequestSchema"
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRequestOnlySystemId'
+  /UserRequests\search:
+    post:
+      summary: Получение списка заявок
+      description: Возвращает список заявок для указанного пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Post_UserRequests-search"
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  UserRequests:
+                    type: array
+                    items: 
+                      $ref: '#/components/schemas/UserRequest'
+  /Notification:
+    post:
+      summary: Отправляет уведомление
+      description: Отправляет уведомление в т. ч. с кнопками согласования из писем
+      parameters:
+        - name: notificationType
+          required: true
+          in: query
+          schema:
+            type: string
+          example: emailApproval
+        - in: query
+          name: UserRequest
+          schema:
+            $ref: '#/components/schemas/UserRequest'
+      responses:
+        "200":
+          description: OK
+  /error/{errorKey}:
+    get:
+      summary: Получение данных по ошибке
+      description: "Возвращает все данные по ошибке включая описание с подстановкой переменных. Переменные в шаблоне в errors.json заключаются в {{}}. Пример: {{variable1}}"
+      parameters:
+      - name: errorKey
+        description: код ошибки латиницей как он прописан в программе и в errors.json
+        in: path
+        required: true
+        schema:
+          type: string
+        example: invalidSystemId
+      - name: variables
+        description: "Переменные (placeholder) в формате ключ=значение. В интерфейсе swagger задаются в JSON. В запросе: \ /error/{errorKey}?variable1=value1&variable2=value2&variable3=value3"
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: object
+          additionalProperties:
+            type: string
+        example: {"variable1": "value1",  "variable2": "value2",  "variable3": "value3"}
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorInfo'
+components:
+  schemas:
+    PostRequestSchema:
+      type: object
+      required:
+        - businessType
+        - userFields
+      properties:
+        businessType:
+          type: string
+          description: Бизнес-тип заявки.
+          example: "vacancy"
+        userFields:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                description: Ключ пользовательского поля
+                example: "Должность"
+              value:
+                type: string
+                description: Значение пользовательского поля
+                example: "Баянист"
+        action РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: string
+          description: Действие пользователя.
+          example: "Отправить"
+        comment:
+          type: string
+          description: Комментарий
+          example: Комментарий к заявке
+    PutRequestSchema:
+      type: object
+      properties:
+        userFields:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                description: Ключ пользовательского поля
+                example: "Должность"
+              value:
+                type: string
+                description: Значение пользовательского поля
+                example: "Баянист"
+        action РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: string
+          description: Действие пользователя.
+          example: "Отправить"
+        comment:
+          type: string
+          description: Комментарий
+          example: Комментарий к заявке
+    UserRequestOnlySystemId:
+      title: UserRequestOnlySystemId
+      type: object
+      properties:
+        systemId:
+          type: string
+          format: uuid
+          description: Идентификатор заявки пользователя
+          example: 550e8400-e29b-41d4-a716-446655440000  
+    UserRequest:
+      title: UserRequest
+      type: object
+      required:
+        - systemId
+        - number
+        - stage
+        - externalTitle
+        - createdAt
+        - updateAt
+        - externalUIurl
+        - userFields
+        - serviceFields
+        - creatorFullname
+      properties:
+        systemId:
+          type: string
+          description: Идентификатор заявки пользователя
+          example: 550e8400-e29b-41d4-a716-446655440000
+
+        number:
+          type: integer
+          minimum: 1
+          description: Человекочитаемый номер документа. Должен быть уникален как минимум в пределах BusinessType. Можно использовать documentID
+          example: 40
+
+        availableActions РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: array
+          description: |
+            Доступные действия. Если actionUserLogin не указан — массив будет пустым.
+            Каждое действие включает название и признак обязательности комментария.
+          items:
+            type: object
+            required:
+              - name
+              - commentRequired
+            properties:
+              name:
+                type: string
+                description: Название действия
+                example: "Согласовать"
+              commentRequired:
+                type: boolean
+                description: Требуется ли обязательный комментарий
+                example: false
+          example:
+            - name: "Согласовать"
+              commentRequired: false
+            - name: "Отказать"
+              commentRequired: true
+
+        stage:
+          type: string
+          description: Имя стадии в процессе согласования. Этап, на котором находится процесс.
+          example: "Согласование"
+
+        externalTitle:
+          type: string
+          description: Название заявки во внешней системе
+          example: "Заявка на вакансию: Дополнительный офис \"ТАТАРСТАН\"/Руководитель Направления №123"
+
+        finalStage РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: boolean
+          description: Признак финальной стадии - процесс завершен
+          example: true
+
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата-время создания заявки
+          example: "2024-02-24T14:30:00Z"
+        
+        updateAt:
+          type: string
+          format: date-time
+          description: Дата-время последнего редактирования заявки
+          example: "2024-02-24T14:30:00Z"
+
+        resolvedAt:
+          type: string
+          format: date-time
+          description: Дата-время успешного выполнения заявки
+          example: "2024-02-24T14:30:00Z"
+        
+        completedAt:
+          type: string
+          format: date-time
+          description: Дата-время Дата завершения заявки, не обязательно успешного. Например,  заявка может быть отменена.
+          example: "2024-02-24T14:30:00Z"
+
+        currentApproversLogins РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: array
+          description: Логины назначенных исполнителей на задачи согласования
+          items:
+            type: string
+          example: ["ivanov", "petrov"]
+        
+        externalUIurl:
+          type: string
+          description: URL-адрес пользовательского интерфейса заявки
+          example: https://bitrix.frhc.group/...
+
+        currentApprovalTasksUIurl РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: array
+          description: URL-адрес пользовательского интерфейса текущих задач согласования
+          items:
+            type: string
+          example: ["https://bitrix.frhc.group/...", "https://bitrix.frhc.group/..."]
+
+        creatorFullname:
+          type: string
+          description: ФИО автора
+          example: "Иванов Иван Иванович"
+
+        executorFullname:
+          type: string
+          description: Исполнитель
+          example: "Иванов Иван Иванович"
+
+        userFields:
+          type: array
+          description: Пользовательские поля. Массив объектов с парой ключ-значение.
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                type: string
+                description: Ключ пользовательского поля
+                example: "Должность"
+              value:
+                type: string
+                description: Значение пользовательского поля
+                example: "Баянист"
+
+        serviceFields:
+          type: array
+          description: Служебные поля. Массив объектов с парой ключ-значение.
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                type: string
+                description: Ключ служебного поля
+                example: "DepartmentDirectorLogin"
+              value:
+                type: string
+                description: Значение служебного поля
+                example: "shikhmagomedov"
+
+        comments:
+          type: array
+          description: Комментарии к заявке.
+          items:
+            type: object
+            required:
+              - authorLogin
+              - authorFullname
+              - createdAt
+              - comment
+            properties:
+              authorLogin:
+                type: string
+                description: Логин автора комментария.
+                example: "ivanov"
+              authorFullname:
+                type: string
+                description: ФИО автора комментария.
+                example: "Иванов Иван Иванович"
+              createdAt:
+                type: string
+                format: date-time
+                description: Дата и время комментария в формате ISO 8601.
+                example: "2021-01-01T10:00:00Z"
+              comment:
+                type: string
+                description: Текст комментария.
+                example: "text"
+
+        history:
+          type: array
+          description: История изменений заявки.
+          items:
+            type: object
+            required:
+              - occurredAt
+              - authorLogin
+              - authorFullname
+              - eventType
+              - stageFrom
+              - stageTo
+            properties:
+              occurredAt:
+                type: string
+                format: date-time
+                description: Дата и время действия в формате ISO 8601.
+                example: "2021-01-01T10:00:00Z"
+              authorLogin:
+                type: string
+                description: Логин автора действия.
+                example: "ivanov"
+              authorFullname:
+                type: string
+                description: ФИО автора комментария.
+                example: "Иванов Иван Иванович"
+              eventType:
+                type: string
+                description: Тип события
+                example: "Стадия изменена"
+              stageFrom:
+                type: string
+                description: Название предыдущей стадии
+                example: "Подготовка"
+              stageTo:
+                type: string
+                description: Название последующей стадии
+                example: "Согласование"
+
+    Post_UserRequests-search:
+      title: UserRequests\search
+      type: object
+      required:
+        - businessType
+      properties:
+        systemIds:
+          type: array
+          description: Идентификаторы заявок
+          items:
+            type: string
+            format: uuid
+          example: ["550e8400-e29b-41d4-a716-446655440000", "e29b8400-550e-41d4-a716-440000446655"]
+        businessType:
+          type: string
+          description: Бизнес-тип заявки.
+          example: "vacancy"
+        actionUserLogin:
+          type: string
+          description: Логин пользователя для которого необходимо вернуть доступные действия
+          example: "ivanov"
+        start:
+          type: integer
+          description: Начальная позиция для пагинации
+          example: 1
+        limit:
+          type: integer
+          description: Количество выводимых строк для пагинации
+          example: 10
+        stages:
+          type: array
+          description: Допустимые стадии
+          items:
+            type: string
+          example: ["Создан", "В работе", "Утверждение"]
+        finalStage РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+          type: boolean
+          description: Признак завершения - финальная стадия
+          example: false
+        createdAtFrom:
+          type: string
+          format: date-time
+          description: Дата-время в формате ISO 8601. Поиск заявки созданной начиная с указанного периода включительно
+          example: "2025-05-03"
+        createdAtTo:
+          type: string
+          format: date-time
+          description: Дата-время в формате ISO 8601. Поиск заявки созданной до указанного периода включительно
+          example: "2025-05-03"
+        updatedAtFrom:
+          type: string
+          format: date-time
+          description: Дата-время в формате ISO 8601. Поиск заявки измененной начиная с указанного периода включительно
+          example: "2025-05-03"
+        updatedAtTo:
+          type: string
+          format: date-time
+          description: Дата-время в формате ISO 8601. Поиск заявки измененной до указанного периода включительно
+          example: "2025-05-03"
+        participationTypes:
+          type: array
+          description: |
+            Типы участия:
+              - "creator" - автор заявки
+              - "executor" - исполнитель
+            Фильтрация осуществляется для активновного пользователя (userName из JWT токена) по перечисленным типам по ИЛИ.
+            Например, если указано ["creator","executor"], то выбираются заявки, где пользователь является автором или исполнителем.
+          items:
+            type: string
+          example: ["creator", "executor"]
+        sortBy:
+          type: array
+          description: |
+            Сортировать по. 
+            Формат объекта: "field":"название поля", "sortOrder": "Обозначение порядка сортировки ASC/DESC".
+            (ASC - по возрастанию, DESC - по убыванию). 
+            Если поле относится к userFields, к названию добавляется префикс "userFields.". Для serviceFields аналогично.
+            Сортировка выполняется по порядку как указано в массиве.
+          items:
+            type: object
+            required:
+              - field
+              - sortOrder
+            properties:
+              field:
+                type: string
+                description: Название поля для сортировки. Если поле относится к userFields, добавляется префикс "userFields.". Для serviceFields аналогично
+              sortOrder:
+                type: string
+                enum: [ASC, DESC]
+                description: Порядок сортировки (ASC - по возрастанию, DESC - по убыванию)
+          example:
+            - field: "number"
+              sortOrder: "ASC"
+            - field: "createdAt"
+              sortOrder: "DESC"
+            - field: "userFields.Должность"
+              sortOrder: "ASC"
+            - field: "serviceFields.organizationCode"
+              sortOrder: "DESC"
+    errorInfo:
+      title: errorInfo
+      type: object
+      required:
+        - errorkey
+      properties:
+        errorkey:
+          type: string
+          description: ключ ошибки
+          example: forbiddenStatusChange
+        errorCode:
+          type: integer
+          description: числовой код ошибки
+          example: 115002
+        HTTPstatus:
+          type: integer
+          description: Код состояния HTTP
+          example: 401
+        message:
+          type: string
+          description: Описание ошибки
+          example: Нет полномочий для изменения статуса
+  parameters:
+    systemId:
+      name: systemId
+      in: query
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор заявки пользователя
+      example: 550e8400-e29b-41d4-a716-446655440000
+    businessType:
+      name: businessType
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Бизнес-тип заявки. В зависимости от него определяется набор полей в документе и бизнес-процесс.
+      example: "vacancy"
+
+    userFields:
+      name: userFields
+      in: query
+      required: true
+      schema:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: string
+              description: Ключ пользовательского поля
+              example: "Должность"
+            value:
+              type: string
+              description: Значение пользовательского поля
+              example: "Баянист"
+      description: Пользовательские поля. Массив объектов с парой ключ-значение.
+
+    serviceFields:
+      name: serviceFields
+      in: query
+      required: true
+      schema:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: string
+              description: Ключ служебного поля
+              example: "DepartmentDirectorLogin"
+            value:
+              type: string
+              description: Значение служебного поля
+              example: "shikhmagomedov"
+      description: Служебные поля. Массив объектов с парой ключ-значение. Используются для управления бизнес-процессом.
+        
+    action РЕАЛИЗАЦИЯ ОТЛОЖЕНА!:
+      name: action
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Действие пользователя.
+      example: "Отправить"
